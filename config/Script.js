@@ -8,13 +8,13 @@ var OPTIONS = {
   // TCP Keep-Alive (seconds): prevents NAT / transit relays from silently dropping idle HTTP/2 & gRPC streams between chat turns
   keepAliveIdle: 30,
   keepAliveInterval: 15,
-  // Auto-tune existing url-test / fallback / load-balance groups (anti-jitter tolerance + fast dead-node circuit breaker)
+  // Auto-tune existing url-test / fallback / load-balance groups & proxy-providers (anti-jitter + fast dead-node circuit breaker)
   tuneAutoGroups: true,
   autoGroupInterval: 180,
   autoGroupTolerance: 50,
   autoGroupTimeout: 2500,
   autoGroupMaxFailed: 2,
-  // Inject Chrome uTLS fingerprint on TCP+TLS nodes that do not explicitly specify one
+  // Inject Chrome uTLS fingerprint on TCP+TLS nodes & proxy-providers that do not explicitly specify one
   injectUtlsFingerprint: true,
   // Optional: set true to prepend 1 subscription-independent rule rejecting overseas UDP:443 (QUIC) for instant HTTP/2 fallback
   rejectOverseasQuic: false
@@ -66,7 +66,15 @@ function main(config, profileName) {
     "store-fake-ip": true
   });
 
-  // 2. Per-Proxy uTLS Fingerprint Normalization (skips QUIC-based hysteria2 / tuic)
+  // TUN UDP NAT session efficiency (merged beneath client UI TUN settings)
+  if (config["tun"] && typeof config["tun"] === "object") {
+    config["tun"]["endpoint-independent-nat"] = true;
+    if (!config["tun"]["udp-timeout"]) {
+      config["tun"]["udp-timeout"] = 60;
+    }
+  }
+
+  // 2. Per-Proxy & Proxy-Provider uTLS Fingerprint + Health-Check Tuning
   if (OPTIONS.injectUtlsFingerprint && Array.isArray(config["proxies"])) {
     var utlsTypes = { "vless": true, "vmess": true, "trojan": true, "anytls": true, "http": true };
     for (var i = 0; i < config["proxies"].length; i++) {
@@ -76,6 +84,36 @@ function main(config, profileName) {
       var tlsEnabled = px["tls"] === true || pType === "trojan" || pType === "anytls";
       if (utlsTypes[pType] && tlsEnabled && !px["client-fingerprint"]) {
         px["client-fingerprint"] = "chrome";
+      }
+    }
+  }
+
+  if (config["proxy-providers"] && typeof config["proxy-providers"] === "object") {
+    var provKeys = Object.keys(config["proxy-providers"]);
+    for (var k = 0; k < provKeys.length; k++) {
+      var prov = config["proxy-providers"][provKeys[k]];
+      if (!prov || typeof prov !== "object") continue;
+      if (OPTIONS.tuneAutoGroups) {
+        var hc = (prov["health-check"] && typeof prov["health-check"] === "object") ? prov["health-check"] : {};
+        hc["enable"] = true;
+        if (!hc["url"] || /^http:\/\//i.test(String(hc["url"]))) {
+          hc["url"] = "https://www.gstatic.com/generate_204";
+        }
+        if (!hc["interval"] || hc["interval"] > 300) {
+          hc["interval"] = OPTIONS.autoGroupInterval;
+        }
+        hc["timeout"] = OPTIONS.autoGroupTimeout;
+        if (typeof hc["lazy"] === "undefined") {
+          hc["lazy"] = true;
+        }
+        prov["health-check"] = hc;
+      }
+      if (OPTIONS.injectUtlsFingerprint) {
+        var ov = (prov["override"] && typeof prov["override"] === "object") ? prov["override"] : {};
+        if (!ov["client-fingerprint"]) {
+          ov["client-fingerprint"] = "chrome";
+        }
+        prov["override"] = ov;
       }
     }
   }
@@ -150,7 +188,14 @@ function main(config, profileName) {
     ]
   };
 
-  // 5. Low-Latency Multi-Carrier Fake-IP DNS (DoQ 0-RTT/1-RTT + IP-literal DoH + 8192 ARC Cache)
+  // 5. Static Zero-RTT Hosts Preload (DoH bootstrap & Windows NCSI probe constant)
+  config["hosts"] = Object.assign({}, config["hosts"] || {}, {
+    "dns.alidns.com": ["223.5.5.5", "223.6.6.6"],
+    "doh.pub": ["1.12.12.12", "120.53.53.53"],
+    "dns.msftncsi.com": "131.107.255.255"
+  });
+
+  // 6. Low-Latency Orthogonal Dual-Carrier Fake-IP DNS (DoQ 0-RTT/1-RTT + IP-literal DoH + 8192 ARC Cache)
   var existingFilter = (config["dns"] && Array.isArray(config["dns"]["fake-ip-filter"]))
     ? config["dns"]["fake-ip-filter"]
     : [];
@@ -220,19 +265,15 @@ function main(config, profileName) {
       "119.29.29.29"
     ],
     "proxy-server-nameserver": [
-      "223.5.5.5",
-      "119.29.29.29",
       "quic://223.5.5.5:853",
-      "https://223.5.5.5/dns-query",
-      "https://1.12.12.12/dns-query",
-      "https://120.53.53.53/dns-query"
+      "https://120.53.53.53/dns-query",
+      "223.5.5.5",
+      "119.29.29.29"
     ],
     "nameserver": [
       "quic://223.5.5.5:853",
       "https://223.5.5.5/dns-query",
-      "https://1.12.12.12/dns-query",
       "https://120.53.53.53/dns-query",
-      "223.5.5.5",
       "119.29.29.29"
     ],
     "fallback": [],

@@ -15,3 +15,7 @@ etag-support: true
 profile:
   store-selected: true
   store-fake-ip: true
+
+tun:
+  endpoint-independent-nat: true
+  udp-timeout: 60

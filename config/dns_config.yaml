@@ -1,5 +1,5 @@
 # Mihomo Global DNS Overwrite Config (Universal Low-TTFT & Zero-Pollution Fake-IP)
-# Multi-carrier racing: AliDNS DoQ (0-RTT/1-RTT) + IP-literal DoH (AliDNS & DNSPod) + UDP
+# Orthogonal dual-carrier racing: AliDNS DoQ (0-RTT/1-RTT) + AliDNS/DNSPod IP-literal DoH + UDP
 # Self-contained wildcard fake-ip-filter (zero hard dependency on external geosite.dat)
 
 dns:
@@ -59,21 +59,24 @@ dns:
     - 223.5.5.5
     - 119.29.29.29
   proxy-server-nameserver:
+    - quic://223.5.5.5:853
+    - https://120.53.53.53/dns-query
     - 223.5.5.5
     - 119.29.29.29
-    - quic://223.5.5.5:853
-    - https://223.5.5.5/dns-query
-    - https://1.12.12.12/dns-query
-    - https://120.53.53.53/dns-query
   nameserver:
     - quic://223.5.5.5:853
     - https://223.5.5.5/dns-query
-    - https://1.12.12.12/dns-query
     - https://120.53.53.53/dns-query
-    - 223.5.5.5
     - 119.29.29.29
   fallback: []
   nameserver-policy: {}
   direct-nameserver: []
   direct-nameserver-follow-policy: false
-hosts: {}
+hosts:
+  dns.alidns.com:
+    - 223.5.5.5
+    - 223.6.6.6
+  doh.pub:
+    - 1.12.12.12
+    - 120.53.53.53
+  dns.msftncsi.com: 131.107.255.255
