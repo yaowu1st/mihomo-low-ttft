@@ -1,0 +1,79 @@
+# Mihomo Global DNS Overwrite Config (Universal Low-TTFT & Zero-Pollution Fake-IP)
+# Multi-carrier racing: AliDNS DoQ (0-RTT/1-RTT) + IP-literal DoH (AliDNS & DNSPod) + UDP
+# Self-contained wildcard fake-ip-filter (zero hard dependency on external geosite.dat)
+
+dns:
+  enable: true
+  ipv6: false
+  prefer-h3: false
+  cache-algorithm: arc
+  cache-max-size: 8192
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  fake-ip-filter-mode: blacklist
+  respect-rules: false
+  use-hosts: true
+  use-system-hosts: true
+  fake-ip-filter:
+    # Local, LAN, mDNS, Docker & Mesh VPNs
+    - localhost
+    - '+.localhost'
+    - '*.lan'
+    - '*.local'
+    - '*.localdomain'
+    - '*.home.arpa'
+    - '*.arpa'
+    - '+.internal'
+    - host.docker.internal
+    - gateway.docker.internal
+    - '+.tailscale.com'
+    - '+.ts.net'
+    # OS & Browser Captive Portal / Connectivity Checks (Windows / macOS / Linux / Mobile)
+    - dns.msftncsi.com
+    - '+.msftncsi.com'
+    - '+.msftconnecttest.com'
+    - captive.apple.com
+    - mesu.apple.com
+    - swscan.apple.com
+    - swdist.apple.com
+    - connectivitycheck.gstatic.com
+    - connectivitycheck.platform.hicloud.com
+    - connect.rom.miui.com
+    - '+.market.xiaomi.com'
+    - wifi.vivo.com.cn
+    - nmcheck.gnome.org
+    - network-test.debian.org
+    # NTP, STUN/WebRTC & Local Auth Loopbacks
+    - 'time.*.com'
+    - 'time.*.gov'
+    - 'time.*.apple.com'
+    - 'ntp.*.com'
+    - 'pool.ntp.org'
+    - '+.pool.ntp.org'
+    - '+.stun.*.*'
+    - '+.stun.*.*.*'
+    - '+.stun.*.*.*.*'
+    - localhost.ptlogin2.qq.com
+    - localhost.sec.qq.com
+  default-nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+  proxy-server-nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+    - quic://223.5.5.5:853
+    - https://223.5.5.5/dns-query
+    - https://1.12.12.12/dns-query
+    - https://120.53.53.53/dns-query
+  nameserver:
+    - quic://223.5.5.5:853
+    - https://223.5.5.5/dns-query
+    - https://1.12.12.12/dns-query
+    - https://120.53.53.53/dns-query
+    - 223.5.5.5
+    - 119.29.29.29
+  fallback: []
+  nameserver-policy: {}
+  direct-nameserver: []
+  direct-nameserver-follow-policy: false
+hosts: {}

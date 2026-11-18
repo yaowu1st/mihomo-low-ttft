@@ -1,0 +1,17 @@
+# Mihomo Global Merge Template (Universal Low-TTFT Tuning)
+# Compatible with Clash Verge Rev / Mihomo Party / Sparkle / FlClash (Windows / macOS / Linux)
+# Zero intrusion into subscription rules or proxy-groups.
+
+log-level: warning
+ipv6: false
+unified-delay: true
+tcp-concurrent: true
+disable-keep-alive: false
+keep-alive-idle: 30
+keep-alive-interval: 15
+geodata-loader: standard
+etag-support: true
+
+profile:
+  store-selected: true
+  store-fake-ip: true

@@ -1,0 +1,15 @@
+# Security: never commit Clash/Mihomo runtime configs, subscriptions, secrets, or logs
+clash-verge.yaml
+clash-verge-check.yaml
+config.yaml
+verge.yaml
+profiles.yaml
+cache.db
+*.log
+*.mmdb
+*.dat
+*.bak
+proxy_providers/
+RuleSet/
+logs/
+backups/
