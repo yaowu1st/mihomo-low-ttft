@@ -71,7 +71,10 @@ $InstallLoc = Get-ItemProperty $RegPaths -ErrorAction SilentlyContinue |
               Where-Object { $_.DisplayName -match "Clash Verge" -and $_.InstallLocation } |
               Select-Object -ExpandProperty InstallLocation -First 1
 if ($InstallLoc) {
-    $BinCandidates += (Join-Path $InstallLoc "verge-mihomo.exe")
+    $CleanInstallLoc = $InstallLoc.Trim().Trim('"')
+    if ($CleanInstallLoc) {
+        $BinCandidates += (Join-Path $CleanInstallLoc "verge-mihomo.exe")
+    }
 }
 $BinCandidates += @(
     "$env:ProgramFiles\Clash Verge\verge-mihomo.exe",
